@@ -1,25 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
+export async function POST(request: Request) {
+  const body = await request.json();
 
-  // Kiểm tra nếu tin nhắn là /start
-  if (body.message?.text === '/start') {
-    const chatId = body.message.chat.id;
-    const userName = body.message.from.first_name || 'bạn';
+  // Kiểm tra xem dữ liệu từ Telegram có hợp lệ không
+  if (!body || !body.message) {
+    return NextResponse.json({ status: "Invalid request" }, { status: 400 });
+  }
 
-    // Gửi tin nhắn phản hồi tới Telegram
-    await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+  const chatId = body.message.chat.id;
+  const message = body.message.text;
+
+  // Phản hồi khi nhận được lệnh /start
+  if (message === "/start") {
+    await fetch(`https://api.telegram.org/bot7647129554:AAFxjqf-re8bsdbq1V8v5yB-jzqHT4pE6lI/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: `Chào ${userName}! Tôi là bot được kết nối từ Next.js.`,
+        text: "Chào bạn! Tôi đã hoạt động thành công 🎉."
       }),
     });
 
-    return NextResponse.json({ status: 'Message sent' });
+    return NextResponse.json({ status: "Message sent" });
   }
 
-  return NextResponse.json({ status: 'No action taken' });
+  return NextResponse.json({ status: "No action" });
 }
