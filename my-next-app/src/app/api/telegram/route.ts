@@ -1,29 +1,41 @@
-import { NextResponse } from "next/server";
+// src/app/api/telegram/route.ts
 
-export async function POST(request: Request) {
-  const body = await request.json();
+import { NextResponse } from 'next/server';
 
-  // Kiểm tra xem dữ liệu từ Telegram có hợp lệ không
-  if (!body || !body.message) {
-    return NextResponse.json({ status: "Invalid request" }, { status: 400 });
-  }
+export async function POST(req: Request) {
+  try {
+    const { message } = await req.json();
 
-  const chatId = body.message.chat.id;
-  const message = body.message.text;
+    if (message && message.text === '/start') {
+      const chatId = message.chat.id;
+      const text = "Hello, I am your bot! How can I assist you?";
 
-  // Phản hồi khi nhận được lệnh /start
-  if (message === "/start") {
-    await fetch(`https://api.telegram.org/bot7647129554:AAFxjqf-re8bsdbq1V8v5yB-jzqHT4pE6lI/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      // Gửi tin nhắn đến Telegram bot
+      const telegramUrl = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+      const payload = {
         chat_id: chatId,
-        text: "Chào bạn! Tôi đã hoạt động thành công 🎉."
-      }),
-    });
+        text: text,
+      };
 
-    return NextResponse.json({ status: "Message sent" });
+      const response = await fetch(telegramUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (data.ok) {
+        return NextResponse.json({ status: 'Message sent successfully' }, { status: 200 });
+      } else {
+        return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
+      }
+    }
+
+    return NextResponse.json({ error: 'Invalid message format' }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-
-  return NextResponse.json({ status: "No action" });
 }
